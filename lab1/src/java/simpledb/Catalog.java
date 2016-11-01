@@ -17,13 +17,24 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
+    
+    private Vector<DbFile> dataFiles;
+    private Vector<String> tableNames;
+    private Vector<String> primaryKeys;
+    private Vector<Integer> tableIds;
 
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
+    
+    
     public Catalog() {
         // some code goes here
+        dataFiles = new Vector<DbFile>();
+        tableNames = new Vector<String>();
+        primaryKeys = new Vector<String>();
+        tableIds = new Vector<Integer>();
     }
 
     /**
@@ -35,8 +46,32 @@ public class Catalog {
      * conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
      */
+    
+    
+    
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+        if (tableNames.contains(name)){
+            int index = tableNames.indexOf(name);
+            dataFiles.set(index, file);
+            tableNames.set(index, name);
+            primaryKeys.set(index, pkeyField);
+            tableIds.set(index, file.getId());
+        }
+        else if (tableIds.contains(file.getId())){
+            int index = tableIds.indexOf(file.getId());
+            dataFiles.set(index, file);
+            tableNames.set(index, name);
+            primaryKeys.set(index, pkeyField);
+            tableIds.set(index, file.getId());
+        }
+        else{
+        dataFiles.add(file);
+        tableNames.add(name);
+        primaryKeys.add(pkeyField);
+        tableIds.add(file.getId());
+        }
+        
     }
 
     public void addTable(DbFile file, String name) {
@@ -59,8 +94,11 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        if (tableNames.contains(name)){
+            return tableIds.get(tableNames.indexOf(name));
+        }
+        else
+            throw new NoSuchElementException();
     }
 
     /**
@@ -70,8 +108,7 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        return this.getDatabaseFile(tableid).getTupleDesc();
     }
 
     /**
@@ -82,6 +119,9 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
+        if (tableIds.contains(tableid)){
+            return dataFiles.get(tableIds.indexOf(tableid));
+        }
         return null;
     }
 
@@ -97,6 +137,9 @@ public class Catalog {
 
     public String getTableName(int id) {
         // some code goes here
+        if (tableIds.contains(id)){
+            return tableNames.get(tableIds.indexOf(id));
+        }
         return null;
     }
     
