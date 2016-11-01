@@ -151,7 +151,7 @@ public class TupleDesc implements Serializable {
     public int fieldNameToIndex(String name) throws NoSuchElementException {
         // some code goes here
         for (int i = 0; i < this.SchemaList.size(); i++) {
-            if ((this.SchemaList.get(i).fieldName).equals(name)) {
+            if (name != null && this.SchemaList.get(i).fieldName != null && (this.SchemaList.get(i).fieldName).equals(name)) {
                 return i;
             }
         }
@@ -192,8 +192,8 @@ public class TupleDesc implements Serializable {
             newfieldAr[i] = td1.getFieldName(i);
         }
         for (int j = 0; j < td2.numFields(); j++) {
-            newtypeAr[j] = td2.getFieldType(j);
-            newfieldAr[j] = td2.getFieldName(j);
+            newtypeAr[j + td1.numFields()] = td2.getFieldType(j);
+            newfieldAr[j + td1.numFields()] = td2.getFieldName(j);
         }
         return new TupleDesc(newtypeAr, newfieldAr);
     }
@@ -211,7 +211,14 @@ public class TupleDesc implements Serializable {
         // some code goes here
         if (o instanceof TupleDesc) {
             TupleDesc test = (TupleDesc) o;
-            
+            if (this.SchemaList.size() == test.SchemaList.size()) {
+                for (int i = 0; i < this.SchemaList.size(); i++) {
+                    if (!this.getFieldType(i).equals(test.getFieldType(i))) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
         return false;
     }
