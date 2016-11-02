@@ -78,7 +78,7 @@ public class BufferPool {
         }
         else{
             if (pageCache.size() >= maxPages){
-                throw new DbException();
+                throw new DbException("");
             }
             Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             pageCache.put(pid, page);

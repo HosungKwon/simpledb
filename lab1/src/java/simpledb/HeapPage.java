@@ -66,8 +66,7 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        // some code goes here
-        return 0;
+        return (int) Math.floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1));
 
     }
 
@@ -78,7 +77,7 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int) Math.ceil((double)getNumTuples()/8);
                  
     }
     
@@ -112,7 +111,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -282,7 +281,13 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int count = 0;
+        for (int i=0;i<getNumTuples();i++){
+            if(!isSlotUsed(i)){
+                count += 1;
+            }
+        }
+        return count;
     }
 
     /**
@@ -290,6 +295,13 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
+        int slotByte = i/8;
+    	int slotBit = i%8;
+        if (slotByte < header.length && slotByte >= 0) {
+            byte byteWithSlot = header[slotByte];
+            int bitmask = 1 << slotBit;
+            return (byteWithSlot&bitmask) > 0;
+        }
         return false;
     }
 
@@ -307,7 +319,29 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        return new HeapPageIterator(this);
+    }
+    
+    public class HeapPageIterator implements Iterator<Tuple>{
+        
+        private HeapPage page;
+        private int numTuples;
+        private int currentTuple;
+        
+        public HeapPageIterator(HeapPage heapPage){
+            page = heapPage;
+            currentTuple = 0;
+            numTuples = heapPage.getNumTuples()-heapPage.getNumEmptySlots();
+        }
+
+        public boolean hasNext() {
+            return (currentTuple < numTuples);
+        }
+
+        public Tuple next() {
+            currentTuple += 1;
+            return page.tuples[currentTuple-1];
+        }
     }
 
 }
