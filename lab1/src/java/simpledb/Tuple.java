@@ -1,8 +1,7 @@
 package simpledb;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
@@ -20,8 +19,17 @@ public class Tuple implements Serializable {
      *            the schema of this tuple. It must be a valid TupleDesc
      *            instance with at least one field.
      */
+    
+    private TupleDesc tDesc;
+    private Vector<Field> fields;
+    
     public Tuple(TupleDesc td) {
         // some code goes here
+        fields = new Vector<>();
+        this.tDesc = td;
+        for (int i = 0; i < td.numFields();i++){
+            this.fields.add(null);
+        }
     }
 
     /**
@@ -29,7 +37,7 @@ public class Tuple implements Serializable {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return tDesc;
     }
 
     /**
@@ -61,6 +69,7 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
+        fields.set(i, f);
     }
 
     /**
@@ -71,7 +80,7 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // some code goes here
-        return null;
+        return fields.get(i);
     }
 
     /**
