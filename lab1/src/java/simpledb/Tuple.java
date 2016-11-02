@@ -22,6 +22,7 @@ public class Tuple implements Serializable {
     
     private TupleDesc tDesc;
     private Vector<Field> fields;
+    private RecordId recId = null;
     
     public Tuple(TupleDesc td) {
         // some code goes here
@@ -46,7 +47,7 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // some code goes here
-        return null;
+        return recId;
     }
 
     /**
@@ -56,7 +57,7 @@ public class Tuple implements Serializable {
      *            the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
+        recId = rid;
     }
 
     /**

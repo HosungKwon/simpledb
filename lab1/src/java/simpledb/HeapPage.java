@@ -339,8 +339,9 @@ public class HeapPage implements Page {
         }
 
         public Tuple next() {
+            Tuple blah = page.tuples[currentTuple];
             currentTuple += 1;
-            return page.tuples[currentTuple-1];
+            return blah;
         }
     }
 
