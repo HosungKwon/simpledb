@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
@@ -14,6 +16,10 @@ import java.util.*;
  * @author Sam Madden
  */
 public class HeapFile implements DbFile {
+    
+    private File dataFile;
+    private TupleDesc tDesc;
+    private int id;
 
     /**
      * Constructs a heap file backed by the specified file.
@@ -24,6 +30,9 @@ public class HeapFile implements DbFile {
      */
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
+        dataFile = f;
+        tDesc = td;
+        id = f.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -33,7 +42,7 @@ public class HeapFile implements DbFile {
      */
     public File getFile() {
         // some code goes here
-        return null;
+        return dataFile;
     }
 
     /**
@@ -47,7 +56,7 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return id;
     }
 
     /**
@@ -57,12 +66,25 @@ public class HeapFile implements DbFile {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return tDesc;
     }
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-        // some code goes here
+        try {
+            // some code goes here
+            RandomAccessFile readFile = new RandomAccessFile(dataFile,"r");
+            int offset = BufferPool.PAGE_SIZE * pid.pageNumber();
+            byte[] data = new byte[BufferPool.PAGE_SIZE];
+            readFile.seek(offset);
+            readFile.read(data,0,BufferPool.getPageSize());
+            readFile.close();
+            return new HeapPage((HeapPageId)pid,data);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(HeapFile.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(HeapFile.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return null;
     }
 
@@ -77,7 +99,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        return (int) (dataFile.length()/BufferPool.getPageSize());
     }
 
     // see DbFile.java for javadocs

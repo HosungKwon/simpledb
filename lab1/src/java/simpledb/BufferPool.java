@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class BufferPool {
     /** Bytes per page, including header. */
-    private static final int PAGE_SIZE = 4096;
+    public static final int PAGE_SIZE = 4096;
 
     private static int pageSize = PAGE_SIZE;
     
