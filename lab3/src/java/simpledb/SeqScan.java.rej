@@ -1,0 +1,81 @@
+--- src/java/simpledb/SeqScan.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/SeqScan.java	2016-11-02 22:06:55.000000000 -0500
+@@ -28,7 +28,6 @@
+      *            tableAlias.null, or null.null).
+      */
+     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
+-        // some code goes here
+     }
+ 
+     /**
+@@ -37,16 +36,13 @@
+      *       be the actual name of the table in the catalog of the database
+      * */
+     public String getTableName() {
+-        return null;
+     }
+-    
++
+     /**
+-     * @return Return the alias of the table this operator scans. 
++     * @return Return the alias of the table this operator scans.
+      * */
+     public String getAlias()
+     {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -62,7 +58,6 @@
+      *            tableAlias.null, or null.null).
+      */
+     public void reset(int tableid, String tableAlias) {
+-        // some code goes here
+     }
+ 
+     public SeqScan(TransactionId tid, int tableid) {
+@@ -70,40 +65,32 @@
+     }
+ 
+     public void open() throws DbException, TransactionAbortedException {
+-        // some code goes here
+     }
+ 
+     /**
+      * Returns the TupleDesc with field names from the underlying HeapFile,
+      * prefixed with the tableAlias string from the constructor. This prefix
+      * becomes useful when joining tables containing a field(s) with the same
+-     * name.
+-     * 
++     * name.  The alias and name should be separated with a "." character
++     * (e.g., "alias.fieldName").
++     *
+      * @return the TupleDesc with field names from the underlying HeapFile,
+      *         prefixed with the tableAlias string from the constructor.
+      */
+     public TupleDesc getTupleDesc() {
+-        // some code goes here
+-        return null;
+     }
+ 
+     public boolean hasNext() throws TransactionAbortedException, DbException {
+-        // some code goes here
+-        return false;
+     }
+ 
+     public Tuple next() throws NoSuchElementException,
+             TransactionAbortedException, DbException {
+-        // some code goes here
+-        return null;
+     }
+ 
+     public void close() {
+-        // some code goes here
+     }
+ 
+     public void rewind() throws DbException, NoSuchElementException,
+             TransactionAbortedException {
+-        // some code goes here
+     }
+ }

@@ -1,0 +1,43 @@
+--- src/java/simpledb/HeapPageId.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/HeapPageId.java	2016-11-02 22:06:55.000000000 -0500
+@@ -11,13 +11,10 @@
+      * @param pgNo The page number in that table.
+      */
+     public HeapPageId(int tableId, int pgNo) {
+-        // some code goes here
+     }
+ 
+     /** @return the table associated with this PageId */
+     public int getTableId() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+@@ -25,8 +22,6 @@
+      *   this PageId
+      */
+     public int pageNumber() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+@@ -36,8 +31,6 @@
+      * @see BufferPool
+      */
+     public int hashCode() {
+-        // some code goes here
+-        throw new UnsupportedOperationException("implement this");
+     }
+ 
+     /**
+@@ -48,8 +41,6 @@
+      *   ids are the same)
+      */
+     public boolean equals(Object o) {
+-        // some code goes here
+-        return false;
+     }
+ 
+     /**

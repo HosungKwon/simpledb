@@ -1,0 +1,96 @@
+--- src/java/simpledb/HeapPage.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/HeapPage.java	2016-11-02 22:06:55.000000000 -0500
+@@ -68,8 +70,6 @@
+         @return the number of tuples on this page
+     */
+     private int getNumTuples() {        
+-        // some code goes here
+-        return 0;
+ 
+     }
+ 
+@@ -79,9 +79,6 @@
+      */
+     private int getHeaderSize() {        
+         
+-        // some code goes here
+-        return 0;
+-                 
+     }
+     
+     /** Return a view of this page before it was modified
+@@ -113,8 +110,6 @@
+      * @return the PageId associated with this page.
+      */
+     public HeapPageId getId() {
+-    // some code goes here
+-    throw new UnsupportedOperationException("implement this");
+     }
+ 
+     /**
+@@ -288,41 +305,45 @@
+      * that did the dirtying
+      */
+     public void markDirty(boolean dirty, TransactionId tid) {
+-        // some code goes here
+-	// not necessary for lab1
++        //Debug.println("HeapPage.markDirty: " + pid.getTableId() + ":" + pid.pageno() + " dirty = " + dirty, 1);
++        this.dirty = dirty;
++        if (dirty) this.dirtier = tid;
+     }
+ 
+     /**
+      * Returns the tid of the transaction that last dirtied this page, or null if the page is not dirty
+      */
+     public TransactionId isDirty() {
+-        // some code goes here
+-	// Not necessary for lab1
+-        return null;      
++        if (this.dirty)
++            return this.dirtier;
++        else
++            return null;
+     }
+ 
+     /**
+      * Returns the number of empty slots on this page.
+      */
+     public int getNumEmptySlots() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+      * Returns true if associated slot on this page is filled.
+      */
+     public boolean isSlotUsed(int i) {
+-        // some code goes here
+-        return false;
+     }
+ 
+     /**
+      * Abstraction to fill or clear a slot on this page.
+      */
+     private void markSlotUsed(int i, boolean value) {
+-        // some code goes here
+-        // not necessary for lab1
++        int headerbit = i % 8;
++        int headerbyte = (i - headerbit) / 8;
++
++        Debug.log(1, "HeapPage.setSlot: setting slot %d to %b", i, value);
++        if(value)
++            header[headerbyte] |= 1 << headerbit;
++        else
++            header[headerbyte] &= (0xFF ^ (1 << headerbit));
+     }
+ 
+     /**
+@@ -330,8 +351,6 @@
+      * (note that this iterator shouldn't return tuples in empty slots!)
+      */
+     public Iterator<Tuple> iterator() {
+-        // some code goes here
+-        return null;
+     }
+ 
+ }
