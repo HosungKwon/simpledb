@@ -1,0 +1,7 @@
+•There weren’t many design choices to be made outside of variable types and the iterator classes. 
+•We declared some class attributes to hold data, which is necessary for the classes to function. Apart from that, no changes were made to the API outside of the designated functions.
+•All code that is necessary for the Lab 1 tests to run successfully is included. Apart from that, there’s nothing else that was tested or implemented, so it’s unclear whether code is missing from those functions and classes.
+•We spent about 10-15 hours, and the hardest part was getting Eclipse to run, and after a while
+
+Hosung Kwon (hkx872)
+Kevin Li (kwl424)

@@ -2,7 +2,11 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -17,7 +21,7 @@ import java.util.*;
 public class BufferPool {
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
-
+    private final Random random = new Random();
     private static int pageSize = PAGE_SIZE;
     
     /** Default number of pages passed to the constructor. This is used by
@@ -145,12 +149,35 @@ public class BufferPool {
      * @param tableId the table to add the tuple to
      * @param t the tuple to add
      */
-    public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
-    }
+    public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException{
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
 
+        // let the specific implementation of the file decide which page to add it
+        // to.
+
+        ArrayList<Page> dirtypages = file.insertTuple(tid, t);
+
+        synchronized(this) {
+            for (Page p : dirtypages){
+                p.markDirty(true, tid);
+                
+                //System.out.println("ADDING TUPLE TO PAGE " + p.getId().pageno() + " WITH HASH CODE " + p.getId().hashCode());
+                
+                // if page in pool already, done.
+                if(pageCache.get(p.getId()) != null) {
+                    //replace old page with new one in case addTuple returns a new copy of the page
+                    pageCache.put(p.getId(), p);
+                }
+                else {
+                    
+                    // put page in pool
+                    if(pageCache.size() >= maxPages)
+                        evictPage();
+                    pageCache.put(p.getId(), p);
+                }
+            }
+        }
+   }
     /**
      * Remove the specified tuple from the buffer pool.
      * Will acquire a write lock on the page the tuple is removed from and any
