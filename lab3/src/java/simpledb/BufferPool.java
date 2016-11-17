@@ -78,7 +78,7 @@ public class BufferPool {
         }
         else{
             if (pageCache.size() >= maxPages){
-                throw new DbException("");
+                this.evictPage();
             }
             Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             pageCache.put(pid, page);
@@ -203,8 +203,8 @@ public class BufferPool {
         		else {
                         
         			// put page in pool
-        			if(pageCache.size() >= maxPages)
-        				evictPage();
+        			//if(pageCache.size() >= maxPages)
+        			//	evictPage();
                     pageCache.put(p.getId(), p);
                 }	
         	}   
