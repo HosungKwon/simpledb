@@ -77,16 +77,20 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
+        if (pageCache.size() == maxPages){
+            evictPage();
+        }
+        
         if (pageCache.containsKey(pid)){
             return pageCache.get(pid);
         }
         else{
             if (pageCache.size() >= maxPages){
-                throw new DbException("");
+                throw new DbException("blah");
             }
             Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             pageCache.put(pid, page);
-            return page;
+            return pageCache.get(pid);
         }
     }
 
@@ -177,7 +181,9 @@ public class BufferPool {
                 }
             }
         }
-   }
+     }
+
+
     /**
      * Remove the specified tuple from the buffer pool.
      * Will acquire a write lock on the page the tuple is removed from and any
@@ -193,8 +199,27 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+      
+        DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+        ArrayList<Page> dirtypages = file.deleteTuple(tid, t);
+
+        synchronized(this) {
+                for (Page p : dirtypages){
+                        p.markDirty(true, tid);
+                    
+                        // if page in pool already, done.
+                        if(pageCache.get(p.getId()) != null) {
+                                //replace old page with new one 
+                                pageCache.put(p.getId(), p);
+                        }
+                        else {
+                        
+                                // put page in pool
+                    pageCache.put(p.getId(), p);
+                          }       
+                }   
+        }    
+    
     }
 
     /**
@@ -203,8 +228,10 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        /* calls flushPage() for each page in the BufferPool */
+        Iterator<PageId> i = pageCache.keySet().iterator();
+        while(i.hasNext())
+            flushPage(i.next());
 
     }
 
@@ -217,8 +244,10 @@ public class BufferPool {
         are removed from the cache so they can be reused safely
     */
     public synchronized void discardPage(PageId pid) {
-        // some code goes here
-        // not necessary for lab1
+        Page p = pageCache.get(pid);
+        if (p != null) {
+            pageCache.remove(pid);
+        }
     }
 
     /**
@@ -226,8 +255,13 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        Page p = pageCache.get(pid);
+        if (p == null)
+            return; //not in buffer pool -- doesn't need to be flushed
+
+        DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+        file.writePage(p);
+        p.markDirty(false, null);
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -242,8 +276,35 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        // pick a random page and flush it.
+        // XXX this will work for lab1, but not for lab4.
+        // XXX this can cause pages to be evicted that have uncommitted updates on them
+        Object pids[] = pageCache.keySet().toArray();
+        PageId pid = (PageId) pids[random.nextInt(pids.length)];
+        try {
+            Page p = pageCache.get(pid);
+            if (p.isDirty() != null) { //if this is dirty, remove first non-dirty
+                boolean gotNew = false;
+                for (PageId pg : pageCache.keySet()) {
+                   if (pageCache.get(pg).isDirty() == null) {
+                        pid = pg;
+                        gotNew = true;
+                        break;
+                    }
+                }
+                if (!gotNew) {
+                    throw new DbException("All buffer pool slots contain dirty pages;  COMMIT or ROLLBACK to continue.");
+                }
+            }
+            //XXX: The above code makes sure page is not dirty. 
+            //Assuming we have FORCE, Why do we flush it to disk?
+            //Answer: yes we don't need this if we have FORCE, but we do need it if we don't.
+            //it doesn't hurt to keep it here.            
+            flushPage(pid);
+        } catch (IOException e) {
+            throw new DbException("could not evict page");
+        }
+        pageCache.remove(pid);
     }
 
 }
