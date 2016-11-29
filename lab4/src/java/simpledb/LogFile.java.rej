@@ -1,0 +1,18 @@
+--- src/java/simpledb/LogFile.java	2016-11-02 22:06:55.000000000 -0500
++++ src/java/simpledb/LogFile.java	2016-11-21 21:00:47.000000000 -0600
+@@ -466,7 +466,6 @@
+         synchronized (Database.getBufferPool()) {
+             synchronized(this) {
+                 preAppend();
+-                // some code goes here
+             }
+         }
+     }
+@@ -493,7 +492,6 @@
+         synchronized (Database.getBufferPool()) {
+             synchronized (this) {
+                 recoveryUndecided = false;
+-                // some code goes here
+             }
+          }
+     }
