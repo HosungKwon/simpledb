@@ -1,0 +1,7 @@
+•The largest design choice to be made was the procedure for stealing pages. Instead of updating the parent's value and pointers at every step, we used a placeholder entry as a stand-in for the parent and didn't touch any of the
+parent pointers until the very end. This greatly reduced the number of necessary operations and pointer reassignments since we didn't have to update the actual parent every time an entry was transferred over.
+-There were a few other minor design choices that were arbitrary choices, e.g. adding new pages as right siblings as opposed to left. Most of these choices leaned towards whichever was easier to code.
+•We made no changes outside of BTreeFile.java, except for the addition of failed patch changes.
+
+Hosung Kwon (hkx872)
+Kevin Li (kwl424)
