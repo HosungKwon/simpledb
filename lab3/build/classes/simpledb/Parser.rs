@@ -1,2 +1,0 @@
-simpledb.Parser
-simpledb.TupleArrayIterator

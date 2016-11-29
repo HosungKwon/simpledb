@@ -1,2 +1,0 @@
-simpledb.TupleComparator
-simpledb.OrderBy
