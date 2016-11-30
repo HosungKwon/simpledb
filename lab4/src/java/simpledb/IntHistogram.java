@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.io.Serializable;
+import java.util.*;
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
@@ -20,8 +22,25 @@ public class IntHistogram {
      * @param min The minimum integer value that will ever be passed to this class for histogramming
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
+    ArrayList<Integer> buckets = new ArrayList<Integer>();
+    int min;
+    int max;
+    int bucketSize;
+    int nTups;
+    
     public IntHistogram(int buckets, int min, int max) {
     	// some code goes here
+        this.bucketSize = Math.abs((max-min)/buckets);
+        for(int i = 0; i <= buckets+1; i++){
+            this.buckets.add(0);
+        }
+        this.min = min;
+        this.max = max;
+        this.nTups = 0;
+        if (this.bucketSize == 0){
+            this.bucketSize = 1;
+        }
+        
     }
 
     /**
@@ -30,6 +49,11 @@ public class IntHistogram {
      */
     public void addValue(int v) {
     	// some code goes here
+        int bucketIndex = Math.abs((v-min)/this.bucketSize);
+        int oldValue = this.buckets.get(bucketIndex);
+        this.buckets.set(bucketIndex,oldValue + 1);
+        this.nTups += 1;
+        
     }
 
     /**
@@ -45,7 +69,50 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
     	// some code goes here
-        return -1.0;
+        int count = 0;
+        int aboveValue = 0;
+        int belowValue = 0;
+        int bucketIndex = Math.abs(v-min)/this.bucketSize;
+        
+        int height = this.buckets.get(bucketIndex);
+        switch(op){
+            case GREATER_THAN:
+                for(int i = bucketIndex+1; i < this.buckets.size(); i++){
+                    count += this.buckets.get(i);
+                }
+                aboveValue = (bucketIndex+1)*this.bucketSize - v;
+                count += aboveValue * (height/this.bucketSize);
+                break;
+            case LESS_THAN:
+                for(int i = 0; i < bucketIndex; i++){
+                    count += this.buckets.get(i);
+                }
+                belowValue = v - bucketIndex*this.bucketSize;
+                count += belowValue * (height/this.bucketSize);
+                break;
+            case EQUALS:
+                count = height/this.bucketSize;
+                break;
+            case LESS_THAN_OR_EQ:
+                for(int i = 0; i < bucketIndex; i++){
+                    count += this.buckets.get(i);
+                }
+                belowValue = v - bucketIndex*this.bucketSize;
+                count += (belowValue + 1) * (height/this.bucketSize);
+                break;
+            case GREATER_THAN_OR_EQ:
+                for(int i = bucketIndex+1; i < this.buckets.size(); i++){
+                    count += this.buckets.get(i);
+                }
+                aboveValue = (bucketIndex+1)*this.bucketSize - v;
+                count += (aboveValue+1) * (height/this.bucketSize);
+                break;
+            case NOT_EQUALS:
+                count = this.nTups - height/this.bucketSize;
+                break;
+        }
+        
+        return (double)count/(double)this.nTups;
     }
     
     /**
