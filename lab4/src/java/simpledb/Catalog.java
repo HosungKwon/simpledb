@@ -127,7 +127,7 @@ public class Catalog {
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+        return primaryKeys.get(tableIds.indexOf(tableid));
     }
 
     public Iterator<Integer> tableIdIterator() {
