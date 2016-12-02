@@ -125,9 +125,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            double io = cost1/card1;
-            double io2 = cost2/card2;
-            return (card1+card1*card2)*(io+io2);
+            return cost1 + card1*cost2 + card1*card2;
         }
     }
 
@@ -171,9 +169,17 @@ public class JoinOptimizer {
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-        int card = 1;
-        // some code goes here
-        return card <= 0 ? 1 : card;
+        if (joinOp == Predicate.Op.EQUALS) {
+            if (t1pkey || card1 < card2) {
+                return card2;
+            } else if (t2pkey || card1 >= card2) {
+                return card1;
+            } else {
+                return -1;
+            }
+        } else {
+            return (int) (0.4*card1*card2);
+        }
     }
 
     /**
@@ -233,11 +239,29 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
+        
+        CostCard best = new CostCard();
+        CostCard current = new CostCard();
+        PlanCache cache = new PlanCache();
 
-
-        // some code goes here
-        //Replace the following
-        return joins;
+        for (int i = 1; i <= enumerateSubsets(this.joins,1).size(); i++){
+            for (Set<LogicalJoinNode> currentSet : enumerateSubsets(this.joins,i)){
+                best.plan = null;
+                best.cost = Double.MAX_VALUE;
+                best.card = Integer.MAX_VALUE;
+                for (LogicalJoinNode currentNode : currentSet){
+                    current = computeCostAndCardOfSubplan(stats, filterSelectivities, currentNode, currentSet, best.cost, cache);
+                    if (current != null && current.cost < best.cost){
+                        best = current;
+                    }
+                }
+                cache.addPlan(currentSet, best.cost, best.card, best.plan);
+            }
+            
+        }
+        Set<LogicalJoinNode> joinSet = new HashSet<LogicalJoinNode>(this.joins);
+        Vector<LogicalJoinNode> bestOrder = cache.getOrder(joinSet);
+        return bestOrder;
     }
 
     // ===================== Private Methods =================================
