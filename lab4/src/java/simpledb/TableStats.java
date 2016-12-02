@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * TableStats represents statistics (e.g., histograms) about base tables in a
@@ -65,6 +67,12 @@ public class TableStats {
      * histograms.
      */
     static final int NUM_HIST_BINS = 100;
+    private HashMap<String,Object> histograms;
+    private HashMap<String,Integer[]> endpoints;
+    private DbFile dataFile;
+    private TupleDesc tDesc;
+    private int numTuples;
+    private int iocost;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -85,7 +93,94 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
         // some code goes here
+        this.iocost = ioCostPerPage;
+        this.numTuples = 0;
+        this.histograms = new HashMap<String,Object>();
+        this.endpoints = new HashMap<String,Integer[]>();
+        this.dataFile = Database.getCatalog().getDatabaseFile(tableid);
+        this.tDesc = this.dataFile.getTupleDesc();
+        
+        TransactionId tid = new TransactionId();
+        DbFileIterator iter = dataFile.iterator(tid);
+        
+        Tuple current;
+        String columnName;
+        int value;
+        String strValue;
+        Integer[] ends;
+        IntHistogram intHist;
+        StringHistogram strHist;
+        try{
+            iter.open();
+            while (iter.hasNext()){
+                current = iter.next();
+                this.numTuples += 1;
+                for(int i = 0; i < tDesc.numFields(); i++){                  
+                    if (tDesc.getFieldType(i).equals(Type.INT_TYPE)){
+                        columnName = tDesc.getFieldName(i);
+                        value = ((IntField) current.getField(i)).getValue();
+                        ends = this.endpoints.get(columnName);
+                        if(!this.endpoints.containsKey(columnName)){
+                            this.endpoints.put(columnName, pair(value,value));
+                        }
+                        else if(value < ends[0]){
+                            this.endpoints.put(columnName, pair(value, ends[1]));
+                        }
+                        else if(value > ends[1]){
+                            this.endpoints.put(columnName, pair(ends[0], value));
+                        }
+                    }
+                }
+            }
+            iter.close();
+        }
+        catch (DbException e) {}
+        catch (TransactionAbortedException e) {}
+        
+        for(int i = 0; i < tDesc.numFields(); i++){
+            columnName = tDesc.getFieldName(i);
+            if(tDesc.getFieldType(i) == Type.INT_TYPE){
+                ends = this.endpoints.get(columnName);
+                intHist = new IntHistogram(NUM_HIST_BINS,ends[0],ends[1]);
+                this.histograms.put(columnName, intHist);
+            }
+            else if(tDesc.getFieldType(i) == Type.STRING_TYPE){
+                strHist = new StringHistogram(NUM_HIST_BINS);
+                this.histograms.put(columnName, strHist);
+            }
+        }
+        try{
+            iter.open();
+            while (iter.hasNext()){
+                current = iter.next();
+                for (int i = 0; i < tDesc.numFields(); i++){
+                    columnName = tDesc.getFieldName(i);
+                    if(tDesc.getFieldType(i) == Type.INT_TYPE){
+                        value = ((IntField) current.getField(i)).getValue();
+                        ((IntHistogram)this.histograms.get(columnName)).addValue(value);
+
+                    }
+                    else if (tDesc.getFieldType(i) == Type.STRING_TYPE){
+                        strValue = ((StringField) current.getField(i)).getValue();
+                        ((StringHistogram)this.histograms.get(columnName)).addValue(strValue);
+                    }
+                    
+                        
+                }
+                
+
+            }
+        }
+        catch (DbException ex) {} 
+        catch (TransactionAbortedException ex) {}
     }
+    
+    private Integer[] pair(int x, int y){
+        Integer[] pair = {x,y};
+        return pair;
+    }
+    
+
 
     /**
      * Estimates the cost of sequentially scanning the file, given that the cost
@@ -101,7 +196,7 @@ public class TableStats {
      */
     public double estimateScanCost() {
         // some code goes here
-        return 0;
+        return ((HeapFile)this.dataFile).numPages() * this.iocost;
     }
 
     /**
@@ -115,7 +210,7 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return 0;
+        return (int)((double)this.numTuples * selectivityFactor);
     }
 
     /**
@@ -148,8 +243,20 @@ public class TableStats {
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
         // some code goes here
-        return 1.0;
+        String columnName = this.tDesc.getFieldName(field);
+        if (constant.getType().equals(Type.INT_TYPE)){
+            int value = ((IntField)constant).getValue();
+            IntHistogram hist = (IntHistogram)this.histograms.get(columnName);
+            return hist.estimateSelectivity(op,value);
+        }
+        else if (constant.getType().equals(Type.STRING_TYPE)){
+            String value = ((StringField)constant).getValue();
+            StringHistogram hist = (StringHistogram)this.histograms.get(columnName);
+            return hist.estimateSelectivity(op,value);
+        }
+        return -1.0;
     }
+    
 
     /**
      * return the total number of tuples in this table
@@ -159,4 +266,8 @@ public class TableStats {
         return 0;
     }
 
+
+    
 }
+
+

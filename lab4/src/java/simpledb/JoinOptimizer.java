@@ -68,7 +68,21 @@ public class JoinOptimizer {
 
         JoinPredicate p = new JoinPredicate(t1id, lj.p, t2id);
 
-        j = new Join(p,plan1,plan2);
+        if (lj.p == Predicate.Op.EQUALS) {
+
+            try {
+                // dynamically load HashEquiJoin -- if it doesn't exist, just
+                // fall back on regular join
+                Class<?> c = Class.forName("simpledb.HashEquiJoin");
+                java.lang.reflect.Constructor<?> ct = c.getConstructors()[0];
+                j = (DbIterator) ct
+                        .newInstance(new Object[] { p, plan1, plan2 });
+            } catch (Exception e) {
+                j = new Join(p, plan1, plan2);
+            }
+        } else {
+            j = new Join(p, plan1, plan2);
+        }
 
         return j;
 
@@ -111,7 +125,9 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+            double io = cost1/card1;
+            double io2 = cost2/card2;
+            return (card1+card1*card2)*(io+io2);
         }
     }
 
@@ -217,7 +233,7 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-        //Not necessary for labs 1--3
+
 
         // some code goes here
         //Replace the following
