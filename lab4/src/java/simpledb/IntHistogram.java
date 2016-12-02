@@ -40,7 +40,6 @@ public class IntHistogram {
         if (this.bucketSize == 0){
             this.bucketSize = 1;
         }
-        
     }
 
     /**
@@ -69,46 +68,58 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
     	// some code goes here
-        int count = 0;
+        double count = 0;
         int aboveValue = 0;
         int belowValue = 0;
         int bucketIndex = Math.abs(v-min)/this.bucketSize;
+
         
         int height = this.buckets.get(bucketIndex);
         switch(op){
             case GREATER_THAN:
+                if (v < min) return 1.0;
+                if (v > max) return 0.0;
                 for(int i = bucketIndex+1; i < this.buckets.size(); i++){
                     count += this.buckets.get(i);
                 }
                 aboveValue = (bucketIndex+1)*this.bucketSize - v;
-                count += aboveValue * (height/this.bucketSize);
+                count += aboveValue * ((double)height/(double)this.bucketSize);
                 break;
             case LESS_THAN:
+                if (v < min) return 0.0;
+                if (v > max) return 1.0;
                 for(int i = 0; i < bucketIndex; i++){
                     count += this.buckets.get(i);
                 }
                 belowValue = v - bucketIndex*this.bucketSize;
-                count += belowValue * (height/this.bucketSize);
+                count += belowValue * ((double)height/(double)this.bucketSize);
                 break;
             case EQUALS:
-                count = height/this.bucketSize;
+                if (v < min) return 0.0;
+                if (v > max) return 0.0;
+                count = (double)height/(double)this.bucketSize;
                 break;
             case LESS_THAN_OR_EQ:
+                if (v < min) return 0.0;
+                if (v >= max) return 1.0;
                 for(int i = 0; i < bucketIndex; i++){
                     count += this.buckets.get(i);
                 }
                 belowValue = v - bucketIndex*this.bucketSize;
-                count += (belowValue + 1) * (height/this.bucketSize);
+                count += (belowValue + 1) * ((double)height/(double)this.bucketSize);
                 break;
             case GREATER_THAN_OR_EQ:
+                if (v <= min) return 1.0;
+                if (v > max) return 0.0;
                 for(int i = bucketIndex+1; i < this.buckets.size(); i++){
                     count += this.buckets.get(i);
                 }
                 aboveValue = (bucketIndex+1)*this.bucketSize - v;
-                count += (aboveValue+1) * (height/this.bucketSize);
+                count += (aboveValue+1) * ((double)height/(double)this.bucketSize);
                 break;
             case NOT_EQUALS:
-                count = this.nTups - height/this.bucketSize;
+                if (v < min || v > max) return 1.0;
+                count = this.nTups - ((double)height/(double)this.bucketSize);
                 break;
         }
         
