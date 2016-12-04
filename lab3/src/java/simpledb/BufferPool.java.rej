@@ -1,0 +1,40 @@
+--- src/java/simpledb/BufferPool.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/BufferPool.java	2016-11-02 22:06:55.000000000 -0500
+@@ -1,6 +1,12 @@
+ package simpledb;
+ 
+ import java.io.*;
++import java.util.ArrayList;
++import java.util.Iterator;
++import java.util.Random;
++import java.util.Vector;
++
++import java.util.concurrent.ConcurrentHashMap;
+ 
+ /**
+  * BufferPool manages the reading and writing of pages into memory from
+@@ -24,13 +30,14 @@
+     constructor instead. */
+     public static final int DEFAULT_PAGES = 50;
+ 
++    private final Random random = new Random();
++
+     /**
+      * Creates a BufferPool that caches up to numPages pages.
+      *
+      * @param numPages maximum number of pages in this buffer pool.
+      */
+     public BufferPool(int numPages) {
+-        // some code goes here
+     }
+     
+     public static int getPageSize() {
+@@ -64,8 +71,6 @@
+      */
+     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+         throws TransactionAbortedException, DbException {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**

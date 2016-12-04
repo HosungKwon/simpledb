@@ -1,0 +1,12 @@
+--- .classpath	2016-11-02 22:06:58.000000000 -0500
++++ .classpath	1969-12-31 18:00:00.000000000 -0600
+@@ -1,9 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<classpath>
+-	<classpathentry kind="src" path="src/java"/>
+-	<classpathentry kind="src" path="test"/>
+-	<classpathentry kind="lib" path="lib/ant-contrib-1.0b3.jar"/>
+-	<classpathentry kind="lib" path="lib/junit-4.5.jar"/>
+-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+-	<classpathentry kind="output" path="bin"/>
+-</classpath>

@@ -1,0 +1,167 @@
+--- src/java/simpledb/HeapFile.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/HeapFile.java	2016-11-02 22:06:55.000000000 -0500
+@@ -26,7 +29,6 @@
+      *            file.
+      */
+     public HeapFile(File f, TupleDesc td) {
+-        // some code goes here
+     }
+ 
+     /**
+@@ -35,8 +37,6 @@
+      * @return the File backing this HeapFile on disk.
+      */
+     public File getFile() {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -49,8 +49,6 @@
+      * @return an ID uniquely identifying this HeapFile.
+      */
+     public int getId() {
+-        // some code goes here
+-        throw new UnsupportedOperationException("implement this");
+     }
+ 
+     /**
+@@ -59,50 +57,122 @@
+      * @return TupleDesc of this DbFile.
+      */
+     public TupleDesc getTupleDesc() {
+-        // some code goes here
+-        throw new UnsupportedOperationException("implement this");
+     }
+ 
+     // see DbFile.java for javadocs
+     public Page readPage(PageId pid) {
+-        // some code goes here
+-        return null;
+     }
+ 
+     // see DbFile.java for javadocs
+     public void writePage(Page page) throws IOException {
+-        // some code goes here
+-        // not necessary for lab1
++        HeapPage p = (HeapPage) page;
++        // System.out.println("Writing back page " + p.getId().pageno());
++        byte[] data = p.getPageData();
++        RandomAccessFile rf = new RandomAccessFile(f, "rw");
++        rf.seek(p.getId().pageNumber() * BufferPool.getPageSize());
++        rf.write(data);
++        rf.close();
+     }
+ 
+     /**
+      * Returns the number of pages in this HeapFile.
+      */
+     public int numPages() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     // see DbFile.java for javadocs
+     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
+             throws DbException, IOException, TransactionAbortedException {
+-        // some code goes here
+-        return null;
+-        // not necessary for lab1
++        ArrayList<Page> dirtypages = new ArrayList<Page>();
++
++        // find the first page with a free slot in it
++        int i = 0;
++        if (lastEmptyPage != -1)
++            i = lastEmptyPage;
++        // XXX: Would it not be better to scan from numPages() to 0 since the
++        // last pages are more likely to have empty slots?
++        for (; i < numPages(); i++) {
++            Debug.log(
++                    4,
++                    "HeapFile.addTuple: checking free slots on page %d of table %d",
++                    i, tableid);
++            HeapPageId pid = new HeapPageId(tableid, i);
++            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, pid,
++                    Permissions.READ_WRITE);
++
++            // no empty slots
++            //
++            // think about why we have to invoke releasePage here.
++            // can you think of ways where
++            if (p.getNumEmptySlots() == 0) {
++                Debug.log(
++                        4,
++                        "HeapFile.addTuple: no free slots on page %d of table %d",
++                        i, tableid);
++
++                // we mistakenly got here through lastEmptyPage, just add a page
++                // XXX we know this isn't very pretty.
++                if (lastEmptyPage != -1) {
++                    lastEmptyPage = -1;
++                    break;
++                }
++                continue;
++            }
++            Debug.log(4, "HeapFile.addTuple: %d free slots in table %d",
++                    p.getNumEmptySlots(), tableid);
++            p.insertTuple(t);
++            lastEmptyPage = p.getId().pageNumber();
++            // System.out.println("nfetches = " + nfetches);
++            dirtypages.add(p);
++            return dirtypages;
++        }
++
++        // no empty slots -- append a page
++        // This must be synchronized so that the append operation is atomic.
++        // Otherwise a second
++        // thread could be blocked just after opening the file. The first
++        // transaction flushes
++        // new tuples to the page. The second transaction then overwrites the
++        // data with an empty
++        // page, losing the new data.
++        synchronized (this) {
++            BufferedOutputStream bw = new BufferedOutputStream(
++                    new FileOutputStream(f, true));
++            byte[] emptyData = HeapPage.createEmptyPageData();
++            bw.write(emptyData);
++            bw.close();
++        }
++
++        // by virtue of writing these bits to the HeapFile, it is now visible.
++        // so some other dude may have obtained a read lock on the empty page
++        // we just created---which is ok, we haven't yet added the tuple.
++        // we just need to lock the page before we can add the tuple to it.
++
++        HeapPage p = (HeapPage) Database.getBufferPool()
++                .getPage(tid, new HeapPageId(tableid, numPages() - 1),
++                        Permissions.READ_WRITE);
++        p.insertTuple(t);
++        lastEmptyPage = p.getId().pageNumber();
++        // System.out.println("nfetches = " + nfetches);
++        dirtypages.add(p);
++        return dirtypages;
+     }
+ 
+     // see DbFile.java for javadocs
+     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
+             TransactionAbortedException {
+-        // some code goes here
+-        return null;
+-        // not necessary for lab1
++        HeapPage p = (HeapPage) Database.getBufferPool().getPage(
++                tid,
++                new HeapPageId(tableid, t.getRecordId().getPageId()
++                        .pageNumber()), Permissions.READ_WRITE);
++        p.deleteTuple(t);
++        ArrayList<Page> pages = new ArrayList<Page>();
++        pages.add(p);
++        return pages;
+     }
+ 
+     // see DbFile.java for javadocs
+     public DbFileIterator iterator(TransactionId tid) {
+-        // some code goes here
+-        return null;
+     }
+ 
+ }

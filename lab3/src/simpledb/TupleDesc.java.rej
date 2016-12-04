@@ -1,0 +1,97 @@
+--- src/java/simpledb/TupleDesc.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/TupleDesc.java	2016-11-02 22:06:55.000000000 -0500
+@@ -41,8 +41,6 @@
+      *        that are included in this TupleDesc
+      * */
+     public Iterator<TDItem> iterator() {
+-        // some code goes here
+-        return null;
+     }
+ 
+     private static final long serialVersionUID = 1L;
+@@ -59,7 +57,6 @@
+      *            be null.
+      */
+     public TupleDesc(Type[] typeAr, String[] fieldAr) {
+-        // some code goes here
+     }
+ 
+     /**
+@@ -71,15 +68,12 @@
+      *            TupleDesc. It must contain at least one entry.
+      */
+     public TupleDesc(Type[] typeAr) {
+-        // some code goes here
+     }
+ 
+     /**
+      * @return the number of fields in this TupleDesc
+      */
+     public int numFields() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+@@ -92,8 +86,6 @@
+      *             if i is not a valid field reference.
+      */
+     public String getFieldName(int i) throws NoSuchElementException {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -107,8 +99,6 @@
+      *             if i is not a valid field reference.
+      */
+     public Type getFieldType(int i) throws NoSuchElementException {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -121,8 +111,6 @@
+      *             if no field with a matching name is found.
+      */
+     public int fieldNameToIndex(String name) throws NoSuchElementException {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+@@ -130,8 +118,6 @@
+      *         Note that tuples from a given TupleDesc are of a fixed size.
+      */
+     public int getSize() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+@@ -145,8 +131,6 @@
+      * @return the new TupleDesc
+      */
+     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -159,8 +143,6 @@
+      * @return true if the object is equal to this TupleDesc.
+      */
+     public boolean equals(Object o) {
+-        // some code goes here
+-        return false;
+     }
+ 
+     public int hashCode() {
+@@ -177,7 +159,5 @@
+      * @return String describing this descriptor.
+      */
+     public String toString() {
+-        // some code goes here
+-        return "";
+     }
+ }

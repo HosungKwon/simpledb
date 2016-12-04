@@ -1,0 +1,34 @@
+--- build.xml	2016-11-02 22:06:58.000000000 -0500
++++ build.xml	2016-11-02 22:06:55.000000000 -0500
+@@ -15,7 +15,7 @@
+     <property name="compile.debug" value="true"/>
+     <property name="test.reports" location="testreport"/>
+ 
+-    <property name="sourceversion" value="1.6"/>
++    <property name="sourceversion" value="1.8"/>
+ 
+     <path id="classpath.base">
+         <pathelement location="${build.src}"/>
+@@ -177,7 +177,7 @@
+     </target>
+ 
+     <target name="javadocs" description="Build javadoc documentation">
+-        <javadoc destdir="${doc}" access="private" failonerror="true" source="${sourceversion}">
++        <javadoc destdir="${doc}" access="private" failonerror="true" source="${sourceversion}" additionalparam="-Xdoclint:none">
+             <classpath refid="classpath.base" />
+             <fileset dir="src/java" defaultexcludes="yes">
+                 <include name="simpledb/**/*.java"/>
+@@ -287,11 +287,11 @@
+             </fileset>
+             <report todir="${test.reports}" />
+         </junitreport>
+-        
++
+         <!-- Fail here if the junit tests failed. -->
+         <fail if="junit.failed" message="Some JUnit tests failed"/>
+     </target>
+-    
++
+     <target name="handin" depends="clean"
+         description="Create a tarball of your code to hand in">
+         <tar destfile="lab-handin.tar.bz2" compression="bzip2"

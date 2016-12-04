@@ -1,0 +1,44 @@
+--- src/java/simpledb/RecordId.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/RecordId.java	2016-11-02 22:06:55.000000000 -0500
+@@ -20,23 +20,18 @@
+      *            the tuple number within the page.
+      */
+     public RecordId(PageId pid, int tupleno) {
+-        // some code goes here
+     }
+ 
+     /**
+      * @return the tuple number this RecordId references.
+      */
+     public int tupleno() {
+-        // some code goes here
+-        return 0;
+     }
+ 
+     /**
+      * @return the page id this RecordId references.
+      */
+     public PageId getPageId() {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -47,8 +42,6 @@
+      */
+     @Override
+     public boolean equals(Object o) {
+-        // some code goes here
+-        throw new UnsupportedOperationException("implement this");
+     }
+ 
+     /**
+@@ -59,8 +52,6 @@
+      */
+     @Override
+     public int hashCode() {
+-        // some code goes here
+-        throw new UnsupportedOperationException("implement this");
+ 
+     }
+ 

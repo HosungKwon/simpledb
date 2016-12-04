@@ -1,0 +1,20 @@
+--- .project	2016-11-02 22:06:58.000000000 -0500
++++ .project	1969-12-31 18:00:00.000000000 -0600
+@@ -1,17 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<projectDescription>
+-	<name>simple-db</name>
+-	<comment></comment>
+-	<projects>
+-	</projects>
+-	<buildSpec>
+-		<buildCommand>
+-			<name>org.eclipse.jdt.core.javabuilder</name>
+-			<arguments>
+-			</arguments>
+-		</buildCommand>
+-	</buildSpec>
+-	<natures>
+-		<nature>org.eclipse.jdt.core.javanature</nature>
+-	</natures>
+-</projectDescription>

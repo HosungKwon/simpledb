@@ -1,0 +1,218 @@
+--- src/java/simpledb/BufferPool.java	2016-11-02 22:06:58.000000000 -0500
++++ src/java/simpledb/BufferPool.java	2016-11-02 22:06:55.000000000 -0500
+@@ -1,6 +1,12 @@
+ package simpledb;
+ 
+ import java.io.*;
++import java.util.ArrayList;
++import java.util.Iterator;
++import java.util.Random;
++import java.util.Vector;
++
++import java.util.concurrent.ConcurrentHashMap;
+ 
+ /**
+  * BufferPool manages the reading and writing of pages into memory from
+@@ -24,13 +30,14 @@
+     constructor instead. */
+     public static final int DEFAULT_PAGES = 50;
+ 
++    private final Random random = new Random();
++
+     /**
+      * Creates a BufferPool that caches up to numPages pages.
+      *
+      * @param numPages maximum number of pages in this buffer pool.
+      */
+     public BufferPool(int numPages) {
+-        // some code goes here
+     }
+     
+     public static int getPageSize() {
+@@ -64,8 +71,6 @@
+      */
+     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+         throws TransactionAbortedException, DbException {
+-        // some code goes here
+-        return null;
+     }
+ 
+     /**
+@@ -79,7 +84,6 @@
+      */
+     public  void releasePage(TransactionId tid, PageId pid) {
+         // some code goes here
+-        // not necessary for lab1|lab2
+     }
+ 
+     /**
+@@ -89,7 +93,6 @@
+      */
+     public void transactionComplete(TransactionId tid) throws IOException {
+         // some code goes here
+-        // not necessary for lab1|lab2
+     }
+ 
+     /** Return true if the specified transaction has a lock on the specified page */
+@@ -109,7 +112,6 @@
+     public void transactionComplete(TransactionId tid, boolean commit)
+         throws IOException {
+         // some code goes here
+-        // not necessary for lab1|lab2
+     }
+ 
+     /**
+@@ -129,8 +131,33 @@
+      */
+     public void insertTuple(TransactionId tid, int tableId, Tuple t)
+         throws DbException, IOException, TransactionAbortedException {
+-        // some code goes here
+-        // not necessary for lab1
++        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
++
++        // let the specific implementation of the file decide which page to add it
++        // to.
++
++        ArrayList<Page> dirtypages = file.insertTuple(tid, t);
++
++        synchronized(this) {
++            for (Page p : dirtypages){
++                p.markDirty(true, tid);
++                
++                //System.out.println("ADDING TUPLE TO PAGE " + p.getId().pageno() + " WITH HASH CODE " + p.getId().hashCode());
++                
++                // if page in pool already, done.
++                if(pages.get(p.getId()) != null) {
++                    //replace old page with new one in case addTuple returns a new copy of the page
++                    pages.put(p.getId(), p);
++                }
++                else {
++                    
++                    // put page in pool
++                    if(pages.size() >= numPages)
++                        evictPage();
++                    pages.put(p.getId(), p);
++                }
++            }
++        }
+     }
+ 
+     /**
+@@ -148,8 +175,27 @@
+      */
+     public  void deleteTuple(TransactionId tid, Tuple t)
+         throws DbException, IOException, TransactionAbortedException {
+-        // some code goes here
+-        // not necessary for lab1
++        DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
++        ArrayList<Page> dirtypages = file.deleteTuple(tid, t);
++
++        synchronized(this) {
++        	for (Page p : dirtypages){
++        		p.markDirty(true, tid);
++                    
++        		// if page in pool already, done.
++        		if(pages.get(p.getId()) != null) {
++        			//replace old page with new one in case deleteTuple returns a new copy of the page
++        			pages.put(p.getId(), p);
++                }
++        		else {
++                        
++        			// put page in pool
++        			if(pages.size() >= numPages)
++        				evictPage();
++                    pages.put(p.getId(), p);
++                }	
++        	}   
++        }    
+     }
+ 
+     /**
+@@ -158,8 +204,10 @@
+      *     break simpledb if running in NO STEAL mode.
+      */
+     public synchronized void flushAllPages() throws IOException {
+-        // some code goes here
+-        // not necessary for lab1
++        /* calls flushPage() for each page in the BufferPool */
++        Iterator<PageId> i = pages.keySet().iterator();
++        while(i.hasNext())
++            flushPage(i.next());
+ 
+     }
+ 
+@@ -172,8 +220,10 @@
+         are removed from the cache so they can be reused safely
+     */
+     public synchronized void discardPage(PageId pid) {
+-        // some code goes here
+-        // not necessary for lab1
++        Page p = pages.get(pid);
++        if (p != null) {
++            pages.remove(pid);
++        }
+     }
+ 
+     /**
+@@ -181,15 +231,20 @@
+      * @param pid an ID indicating the page to flush
+      */
+     private synchronized  void flushPage(PageId pid) throws IOException {
+-        // some code goes here
+-        // not necessary for lab1
++        
++        Page p = pages.get(pid);
++        if (p == null)
++            return; //not in buffer pool -- doesn't need to be flushed
++
++        DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
++        file.writePage(p);
++        p.markDirty(false, null);
+     }
+ 
+     /** Write all pages of the specified transaction to disk.
+      */
+     public synchronized  void flushPages(TransactionId tid) throws IOException {
+         // some code goes here
+-        // not necessary for lab1|lab2
+     }
+ 
+     /**
+@@ -197,8 +252,35 @@
+      * Flushes the page to disk to ensure dirty pages are updated on disk.
+      */
+     private synchronized  void evictPage() throws DbException {
+-        // some code goes here
+-        // not necessary for lab1
++        // pick a random page and flush it.
++        // XXX this will work for lab1, but not for lab4.
++        // XXX this can cause pages to be evicted that have uncommitted updates on them
++        Object pids[] = pages.keySet().toArray();
++        PageId pid = (PageId) pids[random.nextInt(pids.length)];
++        try {
++            Page p = pages.get(pid);
++            if (p.isDirty() != null) { //if this is dirty, remove first non-dirty
++                boolean gotNew = false;
++                for (PageId pg : pages.keySet()) {
++                    if (pages.get(pg).isDirty() == null) {
++                        pid = pg;
++                        gotNew = true;
++                        break;
++                    }
++                }
++                if (!gotNew) {
++                    throw new DbException("All buffer pool slots contain dirty pages;  COMMIT or ROLLBACK to continue.");
++                }
++            }
++            //XXX: The above code makes sure page is not dirty. 
++            //Assuming we have FORCE, Why do we flush it to disk?
++            //Answer: yes we don't need this if we have FORCE, but we do need it if we don't.
++            //it doesn't hurt to keep it here.            
++            flushPage(pid);
++        } catch (IOException e) {
++            throw new DbException("could not evict page");
++        }
++        pages.remove(pid);
+     }
+ 
+ }
