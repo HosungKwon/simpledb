@@ -241,7 +241,7 @@ public class JoinOptimizer {
             throws ParsingException {
         
         CostCard best = new CostCard();
-        CostCard current = new CostCard();
+        CostCard current;
         PlanCache cache = new PlanCache();
 
         for (int i = 1; i <= enumerateSubsets(this.joins,1).size(); i++){
@@ -259,7 +259,7 @@ public class JoinOptimizer {
             }
             
         }
-        Set<LogicalJoinNode> joinSet = new HashSet<LogicalJoinNode>(this.joins);
+        Set<LogicalJoinNode> joinSet = new HashSet<>(this.joins);
         Vector<LogicalJoinNode> bestOrder = cache.getOrder(joinSet);
         return bestOrder;
     }
